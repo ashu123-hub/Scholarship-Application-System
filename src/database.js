@@ -171,12 +171,12 @@ function seedScholarships() {
 }
 
 function seedAdmin() {
-  const passwordHash = bcrypt.hashSync('admin123', 10);
+  const passwordHash = bcrypt.hashSync('ashu123', 10);
   db.run(
     `INSERT INTO admins (username, password_hash, full_name) VALUES (?, ?, ?)`,
     ['admin', passwordHash, 'System Administrator']
   );
-  console.log('👤 Seeded admin user (admin / admin123)');
+  console.log('👤 Seeded admin user (admin / ashu123)');
 }
 
 function saveDatabase() {
