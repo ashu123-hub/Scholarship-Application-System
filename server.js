@@ -6,15 +6,26 @@ const { initDatabase } = require('./src/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Trust proxy — required for Render / Heroku / behind reverse proxy
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'scholarship-system-secret-key-2026',
+  secret: process.env.SESSION_SECRET || 'scholarship-system-secret-key-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    secure: isProduction,         // HTTPS only in production
+    httpOnly: true,
+    sameSite: 'lax'
+  }
 }));
 
 // Static files

@@ -39,7 +39,13 @@ function formatDateTime(dateStr) {
 // ===== Auth =====
 async function checkAuth() {
   try {
-    const response = await fetch('/api/admin/check');
+    const response = await fetch('/api/admin/check', { credentials: 'same-origin' });
+
+    if (!response.ok) {
+      // Not logged in or server error — stay on login screen
+      return;
+    }
+
     const result = await response.json();
 
     if (result.success) {
@@ -50,6 +56,7 @@ async function checkAuth() {
     }
   } catch (e) {
     // Not logged in — show login screen
+    console.log('Auth check skipped:', e.message);
   }
 }
 
@@ -66,8 +73,13 @@ async function login(e) {
     const response = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
+      credentials: 'same-origin'
     });
+
+    if (!response.ok && response.status !== 401) {
+      throw new Error('Server error');
+    }
 
     const result = await response.json();
 
