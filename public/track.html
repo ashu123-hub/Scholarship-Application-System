@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Track your scholarship application status using your unique tracking ID.">
+  <title>Track Application — ScholarHub</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">🎓</div>
+        <span class="nav-brand-text">ScholarHub</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">Home</a></li>
+        <li><a href="/#scholarships">Scholarships</a></li>
+        <li><a href="/apply">Apply Now</a></li>
+        <li><a href="/track" class="active">Track Status</a></li>
+        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="track-container container">
+    <div class="section-header">
+      <h2>📍 Track Your Application</h2>
+      <p>Enter your tracking ID to check the status of your scholarship application</p>
+    </div>
+
+    <!-- Search -->
+    <div class="card">
+      <div class="track-input-group">
+        <input type="text" class="form-input" id="trackingInput" placeholder="Enter tracking ID (e.g. SCH-A1B2C3D4)" style="text-transform: uppercase;">
+        <button class="btn btn-primary" id="trackBtn" onclick="trackApplication()">
+          🔍 Track
+        </button>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div id="trackResult" class="track-result" style="display: none;">
+      <!-- Loading -->
+      <div id="trackLoading" style="text-align: center; padding: 40px;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+        <p class="mt-4" style="color: var(--text-secondary);">Looking up your application...</p>
+      </div>
+
+      <!-- Application Details -->
+      <div id="trackDetails" style="display: none;">
+        <div class="card" style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <h3 id="trackScholarshipName" style="font-size: 1.1rem;"></h3>
+            <span class="card-badge" id="trackStatusBadge"></span>
+          </div>
+
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="label">📋 Tracking ID</span>
+              <span class="value" id="trackId" style="color: var(--accent-blue-light);"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">👤 Applicant</span>
+              <span class="value" id="trackName"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">📧 Email</span>
+              <span class="value" id="trackEmail"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">🏫 Institution</span>
+              <span class="value" id="trackInstitution"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">📚 Course</span>
+              <span class="value" id="trackCourse"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">💰 Scholarship Amount</span>
+              <span class="value" id="trackAmount"></span>
+            </div>
+            <div class="detail-item">
+              <span class="label">📅 Applied On</span>
+              <span class="value" id="trackDate"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Remarks (if any) -->
+        <div id="trackRemarksCard" class="card" style="margin-bottom: 20px; display: none;">
+          <h3 style="font-size: 1rem; margin-bottom: 12px;">💬 Admin Remarks</h3>
+          <p id="trackRemarks" style="color: var(--text-secondary);"></p>
+          <p class="mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+            Verified by: <span id="trackVerifiedBy"></span> on <span id="trackVerifiedAt"></span>
+          </p>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card">
+          <h3 style="font-size: 1rem; margin-bottom: 8px;">Application Timeline</h3>
+          <div class="track-timeline" id="trackTimeline">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Not Found -->
+      <div id="trackNotFound" style="display: none;">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <h3>Application Not Found</h3>
+          <p>No application found with this tracking ID. Please check and try again.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" style="margin-top: 60px;">
+    <div class="container">
+      <p>© 2026 ScholarHub — Scholarship Application System</p>
+    </div>
+  </footer>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/track.js"></script>
+</body>
+</html>

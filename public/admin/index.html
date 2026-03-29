@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Dashboard - Verify and manage scholarship applications.">
+  <title>Admin Dashboard — ScholarHub</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div id="loginScreen">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="nav-brand-icon" style="width: 56px; height: 56px; font-size: 1.6rem; margin: 0 auto 16px;">🎓</div>
+          <h2>Admin Login</h2>
+          <p>ScholarHub Administration Panel</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" id="loginUsername" placeholder="Enter username" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="loginPassword" placeholder="Enter password" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;" id="loginBtn">
+            🔐 Sign In
+          </button>
+          <p class="login-hint">Default: admin / admin123</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboardScreen" class="hidden">
+    <!-- Top Bar -->
+    <div class="admin-topbar">
+      <div class="container" style="display: flex; align-items: center; justify-content: space-between; max-width: 100%; padding: 0 32px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="/" class="nav-brand">
+            <div class="nav-brand-icon">🎓</div>
+            <span class="nav-brand-text">ScholarHub Admin</span>
+          </a>
+        </div>
+        <div class="admin-topbar-right">
+          <span class="admin-greeting">Welcome, <strong id="adminName">Admin</strong></span>
+          <a href="/" class="btn btn-secondary btn-sm">🌐 View Site</a>
+          <button class="btn btn-danger btn-sm" onclick="logout()">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="admin-main">
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15);">📋</div>
+          <div class="stat-info">
+            <h3 id="statTotal">-</h3>
+            <p>Total Applications</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15);">⏳</div>
+          <div class="stat-info">
+            <h3 id="statPending">-</h3>
+            <p>Pending Review</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15);">✅</div>
+          <div class="stat-info">
+            <h3 id="statApproved">-</h3>
+            <p>Approved</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15);">❌</div>
+          <div class="stat-info">
+            <h3 id="statRejected">-</h3>
+            <p>Rejected</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Section -->
+      <div class="admin-section">
+        <div class="admin-section-header">
+          <h2>Applications</h2>
+          <div class="filter-bar" style="margin-bottom: 0;">
+            <div class="filter-search" style="min-width: 200px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="adminSearch" placeholder="Search name, email, ID...">
+            </div>
+            <div class="filter-tabs" id="statusFilter">
+              <button class="filter-tab active" data-status="all">All</button>
+              <button class="filter-tab" data-status="pending">Pending</button>
+              <button class="filter-tab" data-status="approved">Approved</button>
+              <button class="filter-tab" data-status="rejected">Rejected</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="table-wrapper">
+          <table class="data-table" id="applicationsTable">
+            <thead>
+              <tr>
+                <th>Tracking ID</th>
+                <th>Applicant</th>
+                <th>Scholarship</th>
+                <th>Income</th>
+                <th>Limit</th>
+                <th>Status</th>
+                <th>Applied On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="applicationsBody">
+              <tr>
+                <td colspan="8" class="text-center" style="padding: 40px;">
+                  <div class="spinner" style="margin: 0 auto;"></div>
+                  <p class="mt-4" style="color: var(--text-secondary);">Loading applications...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Application Detail Modal -->
+  <div class="modal-overlay" id="appDetailModal">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3>Application Details</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="appDetailBody">
+        <!-- Populated by JS -->
+      </div>
+      <div class="modal-footer" id="appDetailFooter">
+        <!-- Action buttons populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Modal -->
+  <div class="modal-overlay" id="verifyModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="verifyModalTitle">Verify Application</h3>
+        <button class="modal-close" onclick="closeVerifyModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Remarks / Reason</label>
+          <textarea class="form-textarea" id="verifyRemarks" placeholder="Enter remarks for the applicant (optional)"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeVerifyModal()">Cancel</button>
+        <button class="btn" id="verifyConfirmBtn" onclick="confirmVerification()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

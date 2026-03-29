@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Scholarship Application System - Browse and apply for scholarships with income-based validation. Find the right scholarship for your academic journey.">
+  <title>ScholarHub — Scholarship Application System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">🎓</div>
+        <span class="nav-brand-text">ScholarHub</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="#scholarships">Scholarships</a></li>
+        <li><a href="/apply">Apply Now</a></li>
+        <li><a href="/track">Track Status</a></li>
+        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        ✨ Applications Open for 2026-27
+      </div>
+      <h1>
+        Your Future Starts With<br>
+        <span class="gradient-text">The Right Scholarship</span>
+      </h1>
+      <p>
+        Discover scholarships tailored to your needs. Apply easily, track your application 
+        in real-time, and get the financial support you deserve.
+      </p>
+      <div class="hero-buttons">
+        <a href="/apply" class="btn btn-primary btn-lg">
+          🚀 Apply Now
+        </a>
+        <a href="#scholarships" class="btn btn-secondary btn-lg">
+          📋 Browse Scholarships
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>Three simple steps to secure your scholarship</p>
+      </div>
+      <div class="steps-grid">
+        <div class="card step-card">
+          <div class="step-number" style="background: var(--gradient-primary)">1</div>
+          <h3>Browse & Choose</h3>
+          <p>Explore available scholarships, check eligibility criteria and income limits to find your best match.</p>
+        </div>
+        <div class="card step-card">
+          <div class="step-number" style="background: var(--gradient-secondary)">2</div>
+          <h3>Apply Online</h3>
+          <p>Fill out the application form, upload required documents, and submit your application in minutes.</p>
+        </div>
+        <div class="card step-card">
+          <div class="step-number" style="background: var(--gradient-success)">3</div>
+          <h3>Track & Get Verified</h3>
+          <p>Track your application status with your unique ID. Get notified when your application is reviewed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scholarships Section -->
+  <section class="section" id="scholarships">
+    <div class="container">
+      <div class="section-header">
+        <h2>Available Scholarships</h2>
+        <p>Find the perfect scholarship for your academic journey</p>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search scholarships...">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="Merit-Based">Merit</button>
+          <button class="filter-tab" data-filter="Need-Based">Need</button>
+          <button class="filter-tab" data-filter="Category-Based">Category</button>
+          <button class="filter-tab" data-filter="Research">Research</button>
+        </div>
+      </div>
+
+      <!-- Scholarship Grid -->
+      <div class="scholarship-grid" id="scholarshipGrid">
+        <!-- Populated by JS -->
+        <div class="text-center" style="grid-column: 1 / -1; padding: 60px;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p class="mt-4" style="color: var(--text-secondary);">Loading scholarships...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>© 2026 ScholarHub — Scholarship Application System. Built with ❤️ for students.</p>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

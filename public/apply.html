@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Apply for a scholarship - Fill out the multi-step application form with income verification.">
+  <title>Apply for Scholarship — ScholarHub</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">🎓</div>
+        <span class="nav-brand-text">ScholarHub</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">Home</a></li>
+        <li><a href="/#scholarships">Scholarships</a></li>
+        <li><a href="/apply" class="active">Apply Now</a></li>
+        <li><a href="/track">Track Status</a></li>
+        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: 120px; min-height: 100vh; max-width: 800px;">
+    <!-- Application Form -->
+    <div id="applicationForm">
+      <div class="section-header">
+        <h2>Apply for Scholarship</h2>
+        <p id="selectedScholarshipName">Select a scholarship and fill out the form below</p>
+      </div>
+
+      <!-- Scholarship Selection (if none preselected) -->
+      <div id="scholarshipSelectGroup" class="form-group mb-6">
+        <label class="form-label">Select Scholarship <span class="required">*</span></label>
+        <select class="form-select" id="scholarshipSelect">
+          <option value="">Choose a scholarship...</option>
+        </select>
+        <div id="scholarshipInfo" class="mt-2" style="display:none;">
+          <div class="card" style="padding: 16px;">
+            <div class="detail-list" id="scholarshipInfoContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Indicators -->
+      <div class="form-steps" id="formSteps">
+        <div class="form-step-indicator">
+          <div class="step-circle active" data-step="1">1</div>
+          <span class="step-label active">Personal</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="form-step-indicator">
+          <div class="step-circle" data-step="2">2</div>
+          <span class="step-label">Academic</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="form-step-indicator">
+          <div class="step-circle" data-step="3">3</div>
+          <span class="step-label">Financial</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="form-step-indicator">
+          <div class="step-circle" data-step="4">4</div>
+          <span class="step-label">Review</span>
+        </div>
+      </div>
+
+      <form id="applyForm" enctype="multipart/form-data">
+        <!-- Step 1: Personal Details -->
+        <div class="form-step-content active" data-step="1">
+          <div class="card">
+            <h3 style="margin-bottom: 24px;">👤 Personal Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Full Name <span class="required">*</span></label>
+                <input type="text" class="form-input" id="fullName" name="full_name" placeholder="Enter your full name" required>
+                <div class="form-error">Please enter your full name</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address <span class="required">*</span></label>
+                <input type="email" class="form-input" id="email" name="email" placeholder="your@email.com" required>
+                <div class="form-error">Please enter a valid email</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Phone Number <span class="required">*</span></label>
+                <input type="tel" class="form-input" id="phone" name="phone" placeholder="10-digit phone number" required>
+                <div class="form-error">Please enter a valid phone number</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date of Birth <span class="required">*</span></label>
+                <input type="date" class="form-input" id="dob" name="dob" required>
+                <div class="form-error">Please enter your date of birth</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Gender <span class="required">*</span></label>
+                <select class="form-select" id="gender" name="gender" required>
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="form-error">Please select your gender</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-input" id="address" name="address" placeholder="City, State">
+              </div>
+            </div>
+          </div>
+          <div class="form-nav">
+            <div></div>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Academic Details -->
+        <div class="form-step-content" data-step="2">
+          <div class="card">
+            <h3 style="margin-bottom: 24px;">🎓 Academic Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Institution Name <span class="required">*</span></label>
+                <input type="text" class="form-input" id="institution" name="institution" placeholder="College/University name" required>
+                <div class="form-error">Please enter your institution name</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Course / Program <span class="required">*</span></label>
+                <input type="text" class="form-input" id="course" name="course" placeholder="e.g. B.Tech Computer Science" required>
+                <div class="form-error">Please enter your course</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Year of Study <span class="required">*</span></label>
+                <select class="form-select" id="yearOfStudy" name="year_of_study" required>
+                  <option value="">Select year</option>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                  <option value="5">5th Year (PG/Integrated)</option>
+                </select>
+                <div class="form-error">Please select your year of study</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">CGPA / Percentage</label>
+                <input type="number" class="form-input" id="gpa" name="gpa" placeholder="e.g. 8.5" step="0.1" min="0" max="10">
+                <div class="form-hint">Enter CGPA on a scale of 10</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="prevStep()">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Financial Details -->
+        <div class="form-step-content" data-step="3">
+          <div class="card">
+            <h3 style="margin-bottom: 24px;">💰 Financial Details</h3>
+            <div class="form-group">
+              <label class="form-label">Annual Family Income (₹) <span class="required">*</span></label>
+              <input type="number" class="form-input" id="annualIncome" name="annual_income" placeholder="e.g. 200000" required min="0">
+              <div class="form-hint">Enter your total annual family income in Rupees</div>
+              <div class="form-error">Please enter your annual family income</div>
+              <!-- Income validation alert -->
+              <div class="income-alert" id="incomeAlert">
+                <span class="alert-icon"></span>
+                <span class="alert-message"></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Upload Income Proof</label>
+              <div class="file-upload" id="fileUpload">
+                <input type="file" id="incomeProof" name="income_proof" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="file-upload-icon">📎</div>
+                <div class="file-upload-text">
+                  <span>Click to upload</span> or drag and drop<br>
+                  PDF, JPG, PNG (max 5MB)
+                </div>
+              </div>
+              <div id="fileName" class="form-hint mt-2" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="prevStep()">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep()">Review Application →</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Review & Submit -->
+        <div class="form-step-content" data-step="4">
+          <div class="card">
+            <h3 style="margin-bottom: 24px;">📋 Review Your Application</h3>
+            <div id="reviewContent" class="detail-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="prevStep()">← Edit</button>
+            <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+              ✅ Submit Application
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success Screen -->
+    <div id="successScreen" class="hidden">
+      <div class="success-screen">
+        <div class="success-icon">✓</div>
+        <h2>Application Submitted!</h2>
+        <p>Your scholarship application has been submitted successfully.</p>
+        <p>Use your tracking ID to check the status of your application:</p>
+        <div class="tracking-id-display" id="trackingIdDisplay">SCH-XXXXXXXX</div>
+        <p style="color: var(--accent-amber); font-size: 0.85rem;">⚠️ Please save this tracking ID. You'll need it to check your application status.</p>
+        <div class="hero-buttons mt-8">
+          <a href="/track" class="btn btn-primary">📍 Track Application</a>
+          <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/apply.js"></script>
+</body>
+</html>
