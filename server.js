@@ -55,7 +55,7 @@ initDatabase().then(() => {
     console.log(`\n🎓 Scholarship Application System`);
     console.log(`   Server running at http://localhost:${PORT}`);
     console.log(`   Admin panel at http://localhost:${PORT}/admin`);
-    console.log(`   Admin credentials: admin / admin123\n`);
+    console.log(`   Admin credentials: admin / ashu123\n`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);
