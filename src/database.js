@@ -86,6 +86,9 @@ async function initDatabase() {
   const adminCount = db.exec("SELECT COUNT(*) as count FROM admins");
   if (adminCount[0].values[0][0] === 0) {
     seedAdmin();
+  } else {
+    // Update existing admin password in case it was changed
+    updateAdminPassword();
   }
 
   saveDatabase();
@@ -177,6 +180,15 @@ function seedAdmin() {
     ['admin', passwordHash, 'System Administrator']
   );
   console.log('👤 Seeded admin user (admin / ashu123)');
+}
+
+function updateAdminPassword() {
+  const passwordHash = bcrypt.hashSync('ashu123', 10);
+  db.run(
+    `UPDATE admins SET password_hash = ? WHERE username = ?`,
+    [passwordHash, 'admin']
+  );
+  console.log('🔑 Updated admin password');
 }
 
 function saveDatabase() {
