@@ -2,6 +2,7 @@
 
 let currentAppId = null;
 let verifyAction = null;
+let confirmCallback = null;
 
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
@@ -42,7 +43,6 @@ async function checkAuth() {
     const response = await fetch('/api/admin/check', { credentials: 'same-origin' });
 
     if (!response.ok) {
-      // Not logged in or server error — stay on login screen
       return;
     }
 
@@ -55,7 +55,6 @@ async function checkAuth() {
       loadDashboard();
     }
   } catch (e) {
-    // Not logged in — show login screen
     console.log('Auth check skipped:', e.message);
   }
 }
@@ -107,6 +106,23 @@ async function logout() {
   showToast('Logged out successfully');
 }
 
+// ===== Tab Switching =====
+function switchTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.admin-tab[data-tab="${tab}"]`).classList.add('active');
+
+  // Show/hide sections
+  if (tab === 'applications') {
+    document.getElementById('sectionApplications').classList.remove('hidden');
+    document.getElementById('sectionUsers').classList.add('hidden');
+  } else {
+    document.getElementById('sectionApplications').classList.add('hidden');
+    document.getElementById('sectionUsers').classList.remove('hidden');
+    loadUsers();
+  }
+}
+
 // ===== Dashboard =====
 async function loadDashboard() {
   loadStats();
@@ -124,6 +140,7 @@ async function loadStats() {
       animateCounter('statPending', s.pending);
       animateCounter('statApproved', s.approved);
       animateCounter('statRejected', s.rejected);
+      animateCounter('statUsers', s.totalUsers || 0);
     }
   } catch (error) {
     console.error('Failed to load stats:', error);
@@ -132,6 +149,7 @@ async function loadStats() {
 
 function animateCounter(elementId, target) {
   const el = document.getElementById(elementId);
+  if (!el) return;
   const duration = 600;
   const start = 0;
   const startTime = performance.now();
@@ -424,13 +442,161 @@ async function confirmVerification() {
   btn.textContent = verifyAction === 'approved' ? 'Approve' : 'Reject';
 }
 
+// ===== USER MANAGEMENT =====
+async function loadUsers(status = 'all', search = '') {
+  const tbody = document.getElementById('usersBody');
+
+  try {
+    let url = '/api/admin/users?';
+    if (status !== 'all') url += `status=${status}&`;
+    if (search) url += `search=${encodeURIComponent(search)}`;
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (result.success && result.data.length > 0) {
+      tbody.innerHTML = result.data.map(user => {
+        const initials = user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        const isActive = user.is_active === 1;
+        const isVerified = user.is_verified === 1;
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-avatar-sm" style="background: ${isActive ? 'var(--gradient-primary)' : 'var(--bg-glass)'};">${initials}</div>
+                <div>
+                  <div style="font-weight: 600;">${user.full_name}</div>
+                  ${!isVerified ? '<span style="font-size: 0.7rem; color: var(--accent-amber);">⚠️ Unverified</span>' : ''}
+                </div>
+              </div>
+            </td>
+            <td style="font-size: 0.85rem;">${user.email}</td>
+            <td style="font-size: 0.85rem;">${user.phone}</td>
+            <td style="font-size: 0.85rem; text-align: center;">${user.application_count}</td>
+            <td>
+              <span class="card-badge ${isActive ? 'badge-approved' : 'badge-rejected'}">
+                ${isActive ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td style="font-size: 0.85rem; color: var(--text-muted);">${formatDate(user.created_at)}</td>
+            <td>
+              <div class="table-actions">
+                <button class="action-btn ${isActive ? 'action-btn-reject' : 'action-btn-approve'}" onclick="toggleUser(${user.id}, '${user.full_name}', ${isActive})">
+                  ${isActive ? '🚫' : '✅'}
+                </button>
+                <button class="action-btn action-btn-reject" onclick="deleteUser(${user.id}, '${user.full_name}', '${user.email}')">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } else {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">👥</div>
+              <h3>No users found</h3>
+              <p>No registered users match your filters</p>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+  } catch (error) {
+    console.error('Failed to load users:', error);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center" style="padding: 40px; color: var(--accent-red);">
+          Failed to load users. Please try refreshing.
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function toggleUser(id, name, isCurrentlyActive) {
+  const action = isCurrentlyActive ? 'Deactivate' : 'Activate';
+  const btnClass = isCurrentlyActive ? 'btn-danger' : 'btn-success';
+
+  openConfirmModal(
+    `${action} User`,
+    `Are you sure you want to ${action.toLowerCase()} <strong>${name}</strong>?${isCurrentlyActive ? ' They will not be able to log in or submit applications.' : ' They will be able to log in and submit applications again.'}`,
+    btnClass,
+    action,
+    async () => {
+      try {
+        const res = await fetch(`/api/admin/users/${id}/toggle`, { method: 'PUT' });
+        const result = await res.json();
+        showToast(result.message, result.success ? 'success' : 'error');
+        if (result.success) {
+          loadUsers();
+          loadStats();
+        }
+      } catch (e) {
+        showToast('Failed to update user', 'error');
+      }
+    }
+  );
+}
+
+function deleteUser(id, name, email) {
+  openConfirmModal(
+    '🗑️ Delete User',
+    `Are you sure you want to permanently delete <strong>${name}</strong> (${email})? This will also delete all their scholarship applications. <span style="color: var(--accent-red);">This action cannot be undone.</span>`,
+    'btn-danger',
+    'Delete',
+    async () => {
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        showToast(result.message, result.success ? 'success' : 'error');
+        if (result.success) {
+          loadUsers();
+          loadStats();
+        }
+      } catch (e) {
+        showToast('Failed to delete user', 'error');
+      }
+    }
+  );
+}
+
+// ===== Confirm Modal =====
+function openConfirmModal(title, message, btnClass, btnText, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').innerHTML = message;
+
+  const btn = document.getElementById('confirmActionBtn');
+  btn.className = `btn ${btnClass}`;
+  btn.textContent = btnText;
+
+  confirmCallback = callback;
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('active');
+  confirmCallback = null;
+}
+
+document.getElementById('confirmActionBtn')?.addEventListener('click', async () => {
+  if (confirmCallback) {
+    await confirmCallback();
+    closeConfirmModal();
+  }
+});
+
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
 
   document.getElementById('loginForm').addEventListener('submit', login);
 
-  // Status filter tabs
+  // Status filter tabs (applications)
   document.getElementById('statusFilter').addEventListener('click', (e) => {
     if (e.target.classList.contains('filter-tab')) {
       document.querySelectorAll('#statusFilter .filter-tab').forEach(t => t.classList.remove('active'));
@@ -441,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Search
+  // Search (applications)
   let searchTimeout;
   document.getElementById('adminSearch').addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
@@ -452,6 +618,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   });
 
+  // Status filter tabs (users)
+  document.getElementById('userStatusFilter').addEventListener('click', (e) => {
+    if (e.target.classList.contains('filter-tab')) {
+      document.querySelectorAll('#userStatusFilter .filter-tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      const status = e.target.dataset.status;
+      const search = document.getElementById('userSearch').value;
+      loadUsers(status, search);
+    }
+  });
+
+  // Search (users)
+  let userSearchTimeout;
+  document.getElementById('userSearch').addEventListener('input', (e) => {
+    clearTimeout(userSearchTimeout);
+    userSearchTimeout = setTimeout(() => {
+      const activeTab = document.querySelector('#userStatusFilter .filter-tab.active');
+      const status = activeTab ? activeTab.dataset.status : 'all';
+      loadUsers(status, e.target.value);
+    }, 300);
+  });
+
   // Close modals on overlay click
   document.getElementById('appDetailModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('appDetailModal')) closeModal();
@@ -459,5 +647,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('verifyModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('verifyModal')) closeVerifyModal();
+  });
+
+  document.getElementById('confirmModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('confirmModal')) closeConfirmModal();
   });
 });

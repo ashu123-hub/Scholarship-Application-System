@@ -203,10 +203,54 @@ async function showScholarshipDetails(id) {
   }
 }
 
+// ===== Auth State =====
+async function checkAuthState() {
+  try {
+    const response = await fetch('/api/auth/check');
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        updateNavbarAuth(result.data);
+      }
+    }
+  } catch (e) {
+    // Not logged in — stays as guest
+  }
+}
+
+function updateNavbarAuth(user) {
+  const guest = document.getElementById('navAuthGuest');
+  const userEl = document.getElementById('navAuthUser');
+
+  if (guest && userEl && user) {
+    guest.style.display = 'none';
+    userEl.style.display = 'block';
+
+    const initials = user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    document.getElementById('navUserAvatar').textContent = initials;
+    document.getElementById('navUserName').textContent = user.full_name.split(' ')[0];
+    document.getElementById('dropdownName').textContent = user.full_name;
+    document.getElementById('dropdownEmail').textContent = user.email;
+  }
+}
+
+async function logoutUser() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    showToast('Logged out successfully');
+    setTimeout(() => window.location.reload(), 500);
+  } catch (e) {
+    window.location.reload();
+  }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
   // Load scholarships
   loadScholarships();
+
+  // Check auth state
+  checkAuthState();
 
   // Filter tabs
   document.getElementById('filterTabs').addEventListener('click', (e) => {
@@ -244,4 +288,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('navToggle').addEventListener('click', () => {
     document.getElementById('navLinks').classList.toggle('open');
   });
+
+  // User dropdown toggle
+  const userBtn = document.getElementById('navUserBtn');
+  if (userBtn) {
+    userBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('navUserDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => {
+      document.getElementById('navUserDropdown')?.classList.remove('open');
+    });
+  }
 });

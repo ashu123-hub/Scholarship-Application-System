@@ -46,6 +46,7 @@ async function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tracking_id TEXT UNIQUE NOT NULL,
       scholarship_id INTEGER NOT NULL,
+      user_id INTEGER,
       full_name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
@@ -63,7 +64,8 @@ async function initDatabase() {
       verified_by TEXT,
       verified_at TEXT,
       created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (scholarship_id) REFERENCES scholarships(id)
+      FOREIGN KEY (scholarship_id) REFERENCES scholarships(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `);
 
@@ -76,6 +78,29 @@ async function initDatabase() {
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      full_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      is_verified INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      otp_code TEXT,
+      otp_expires_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Migration: add user_id column if missing (for existing DBs)
+  try {
+    db.exec("SELECT user_id FROM applications LIMIT 1");
+  } catch (e) {
+    db.run("ALTER TABLE applications ADD COLUMN user_id INTEGER REFERENCES users(id)");
+    console.log('🔄 Migrated: added user_id column to applications');
+  }
 
   // Seed data if tables are empty
   const scholarshipCount = db.exec("SELECT COUNT(*) as count FROM scholarships");

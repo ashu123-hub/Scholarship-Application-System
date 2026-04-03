@@ -27,7 +27,28 @@
         <li><a href="#scholarships">Scholarships</a></li>
         <li><a href="/apply">Apply Now</a></li>
         <li><a href="/track">Track Status</a></li>
-        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+        <!-- Auth links (dynamic) -->
+        <li id="navAuthGuest">
+          <a href="/login" class="btn-nav">Login / Register</a>
+        </li>
+        <li id="navAuthUser" style="display:none;">
+          <div class="nav-user-menu">
+            <button class="nav-user-btn" id="navUserBtn">
+              <span class="nav-user-avatar" id="navUserAvatar">U</span>
+              <span class="nav-user-name" id="navUserName">User</span>
+            </button>
+            <div class="nav-user-dropdown" id="navUserDropdown">
+              <div class="dropdown-header">
+                <strong id="dropdownName">User</strong>
+                <span id="dropdownEmail">user@email.com</span>
+              </div>
+              <a href="/apply" class="dropdown-item">🚀 Apply for Scholarship</a>
+              <a href="/track" class="dropdown-item">📍 Track Application</a>
+              <button class="dropdown-item dropdown-logout" onclick="logoutUser()">🚪 Logout</button>
+            </div>
+          </div>
+        </li>
+        <li><a href="/admin" class="btn-nav" style="background: var(--bg-glass-hover); border: 1px solid var(--border-light);">Admin</a></li>
       </ul>
     </div>
   </nav>
@@ -67,8 +88,8 @@
       <div class="steps-grid">
         <div class="card step-card">
           <div class="step-number" style="background: var(--gradient-primary)">1</div>
-          <h3>Browse & Choose</h3>
-          <p>Explore available scholarships, check eligibility criteria and income limits to find your best match.</p>
+          <h3>Create Account</h3>
+          <p>Register with your email and verify via OTP. Your account keeps all your applications organized.</p>
         </div>
         <div class="card step-card">
           <div class="step-number" style="background: var(--gradient-secondary)">2</div>
@@ -130,5 +151,4 @@
 
   <script src="/js/app.js"></script>
 </body>
-
 </html>

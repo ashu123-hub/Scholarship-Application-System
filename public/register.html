@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create your ScholarHub account to apply for scholarships.">
+  <title>Create Account — ScholarHub</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <div class="nav-brand-icon">🎓</div>
+        <span class="nav-brand-text">ScholarHub</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/">Home</a></li>
+        <li><a href="/#scholarships">Scholarships</a></li>
+        <li><a href="/apply">Apply Now</a></li>
+        <li><a href="/track">Track Status</a></li>
+        <li><a href="/login" class="btn-nav">Login</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card" id="authCard">
+
+        <!-- Step 1: Registration Form -->
+        <div class="auth-step active" id="stepRegister">
+          <div class="auth-header">
+            <div class="nav-brand-icon" style="width: 56px; height: 56px; font-size: 1.6rem; margin: 0 auto 16px;">🎓</div>
+            <h2>Create Account</h2>
+            <p>Join ScholarHub to apply for scholarships</p>
+          </div>
+          <form id="registerForm" class="auth-form">
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required">*</span></label>
+              <input type="text" class="form-input" id="regName" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address <span class="required">*</span></label>
+              <input type="email" class="form-input" id="regEmail" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number <span class="required">*</span></label>
+              <input type="tel" class="form-input" id="regPhone" placeholder="10-digit phone number" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password <span class="required">*</span></label>
+              <div class="password-wrapper">
+                <input type="password" class="form-input" id="regPassword" placeholder="Min 6 characters" required minlength="6">
+                <button type="button" class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm Password <span class="required">*</span></label>
+              <div class="password-wrapper">
+                <input type="password" class="form-input" id="regConfirmPassword" placeholder="Re-enter password" required minlength="6">
+                <button type="button" class="password-toggle" onclick="togglePassword('regConfirmPassword', this)">👁️</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+              📧 Create Account & Send OTP
+            </button>
+            <p class="auth-link">
+              Already have an account? <a href="/login">Login here</a>
+            </p>
+          </form>
+        </div>
+
+        <!-- Step 2: OTP Verification -->
+        <div class="auth-step" id="stepOTP">
+          <div class="auth-header">
+            <div class="otp-icon">📧</div>
+            <h2>Verify Your Email</h2>
+            <p>We've sent a 6-digit OTP to <strong id="otpEmailDisplay">your email</strong></p>
+          </div>
+          <form id="otpForm" class="auth-form">
+            <div class="otp-inputs" id="otpInputs">
+              <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric" autocomplete="one-time-code">
+              <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric">
+              <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric">
+              <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric">
+              <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric">
+              <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="verifyOTPBtn">
+              ✅ Verify OTP
+            </button>
+            <div class="otp-resend">
+              <span id="resendTimer">Resend OTP in <strong>60s</strong></span>
+              <button type="button" class="btn-link" id="resendBtn" style="display:none;" onclick="resendOTP()">
+                🔄 Resend OTP
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div class="auth-step" id="stepSuccess">
+          <div class="auth-header">
+            <div class="success-icon" style="margin-bottom: 20px;">✓</div>
+            <h2>Account Created!</h2>
+            <p>Your email has been verified successfully. You're now logged in.</p>
+          </div>
+          <div class="hero-buttons" style="justify-content: center; margin-top: 24px;">
+            <a href="/apply" class="btn btn-primary">🚀 Apply for Scholarship</a>
+            <a href="/" class="btn btn-secondary">🏠 Go to Home</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

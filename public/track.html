@@ -23,7 +23,27 @@
         <li><a href="/#scholarships">Scholarships</a></li>
         <li><a href="/apply">Apply Now</a></li>
         <li><a href="/track" class="active">Track Status</a></li>
-        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+        <li id="navAuthGuest">
+          <a href="/login" class="btn-nav">Login / Register</a>
+        </li>
+        <li id="navAuthUser" style="display:none;">
+          <div class="nav-user-menu">
+            <button class="nav-user-btn" id="navUserBtn">
+              <span class="nav-user-avatar" id="navUserAvatar">U</span>
+              <span class="nav-user-name" id="navUserName">User</span>
+            </button>
+            <div class="nav-user-dropdown" id="navUserDropdown">
+              <div class="dropdown-header">
+                <strong id="dropdownName">User</strong>
+                <span id="dropdownEmail">user@email.com</span>
+              </div>
+              <a href="/apply" class="dropdown-item">🚀 Apply for Scholarship</a>
+              <a href="/track" class="dropdown-item">📍 Track Application</a>
+              <button class="dropdown-item dropdown-logout" onclick="logoutUser()">🚪 Logout</button>
+            </div>
+          </div>
+        </li>
+        <li><a href="/admin" class="btn-nav" style="background: var(--bg-glass-hover); border: 1px solid var(--border-light);">Admin</a></li>
       </ul>
     </div>
   </nav>

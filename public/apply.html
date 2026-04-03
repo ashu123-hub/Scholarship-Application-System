@@ -23,14 +23,48 @@
         <li><a href="/#scholarships">Scholarships</a></li>
         <li><a href="/apply" class="active">Apply Now</a></li>
         <li><a href="/track">Track Status</a></li>
-        <li><a href="/admin" class="btn-nav">Admin Panel</a></li>
+        <li id="navAuthGuest">
+          <a href="/login" class="btn-nav">Login / Register</a>
+        </li>
+        <li id="navAuthUser" style="display:none;">
+          <div class="nav-user-menu">
+            <button class="nav-user-btn" id="navUserBtn">
+              <span class="nav-user-avatar" id="navUserAvatar">U</span>
+              <span class="nav-user-name" id="navUserName">User</span>
+            </button>
+            <div class="nav-user-dropdown" id="navUserDropdown">
+              <div class="dropdown-header">
+                <strong id="dropdownName">User</strong>
+                <span id="dropdownEmail">user@email.com</span>
+              </div>
+              <a href="/apply" class="dropdown-item">🚀 Apply for Scholarship</a>
+              <a href="/track" class="dropdown-item">📍 Track Application</a>
+              <button class="dropdown-item dropdown-logout" onclick="logoutUser()">🚪 Logout</button>
+            </div>
+          </div>
+        </li>
+        <li><a href="/admin" class="btn-nav" style="background: var(--bg-glass-hover); border: 1px solid var(--border-light);">Admin</a></li>
       </ul>
     </div>
   </nav>
 
   <main class="container" style="padding-top: 120px; min-height: 100vh; max-width: 800px;">
-    <!-- Application Form -->
-    <div id="applicationForm">
+
+    <!-- Login Gate (shown when not logged in) -->
+    <div id="loginGate" class="hidden">
+      <div class="auth-gate">
+        <div class="auth-gate-icon">🔐</div>
+        <h2>Login Required</h2>
+        <p>You need to create an account and log in before applying for a scholarship.</p>
+        <div class="hero-buttons" style="justify-content: center; margin-top: 28px;">
+          <a href="/login?redirect=/apply" class="btn btn-primary btn-lg" id="gateLoginBtn">🔐 Login</a>
+          <a href="/register" class="btn btn-secondary btn-lg">📝 Create Account</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Form (shown when logged in) -->
+    <div id="applicationForm" class="hidden">
       <div class="section-header">
         <h2>Apply for Scholarship</h2>
         <p id="selectedScholarshipName">Select a scholarship and fill out the form below</p>

@@ -31,8 +31,21 @@ const upload = multer({
   }
 });
 
-// POST /api/applications — Submit a new application
-router.post('/', upload.single('income_proof'), (req, res) => {
+// Middleware to require logged-in user
+function requireUser(req, res, next) {
+  if (req.session && req.session.userId) {
+    next();
+  } else {
+    res.status(401).json({
+      success: false,
+      message: 'Please log in to submit an application.',
+      redirect: '/login'
+    });
+  }
+}
+
+// POST /api/applications — Submit a new application (requires login)
+router.post('/', requireUser, upload.single('income_proof'), (req, res) => {
   try {
     const db = getDb();
     const {
@@ -93,15 +106,16 @@ router.post('/', upload.single('income_proof'), (req, res) => {
     // Generate tracking ID
     const trackingId = 'SCH-' + uuidv4().slice(0, 8).toUpperCase();
 
-    // Insert application
+    // Insert application with user_id
     const incomProofPath = req.file ? req.file.filename : null;
     db.run(
       `INSERT INTO applications 
-       (tracking_id, scholarship_id, full_name, email, phone, dob, gender, address,
+       (tracking_id, scholarship_id, user_id, full_name, email, phone, dob, gender, address,
         institution, course, year_of_study, gpa, annual_income, income_proof_path)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        trackingId, parseInt(scholarship_id), full_name, email, phone, dob, gender,
+        trackingId, parseInt(scholarship_id), req.session.userId,
+        full_name, email, phone, dob, gender,
         address || '', institution, course, parseInt(year_of_study),
         gpa ? parseFloat(gpa) : null, incomeValue, incomProofPath
       ]

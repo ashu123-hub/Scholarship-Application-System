@@ -42,10 +42,12 @@ app.use('/uploads', express.static(uploadsDir));
 const scholarshipRoutes = require('./src/routes/scholarships');
 const applicationRoutes = require('./src/routes/applications');
 const adminRoutes = require('./src/routes/admin');
+const { router: authRoutes } = require('./src/routes/auth');
 
 app.use('/api/scholarships', scholarshipRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
 
 // SPA fallback — serve HTML pages
 app.get('/apply', (req, res) => {
@@ -54,6 +56,14 @@ app.get('/apply', (req, res) => {
 
 app.get('/track', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'track.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
 app.get('/admin', (req, res) => {

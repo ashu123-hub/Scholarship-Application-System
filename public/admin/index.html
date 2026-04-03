@@ -32,7 +32,6 @@
           <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;" id="loginBtn">
             🔐 Sign In
           </button>
-          <p class="login-hint">Default: admin / admin123</p>
         </form>
       </div>
     </div>
@@ -58,6 +57,16 @@
     </div>
 
     <main class="admin-main">
+      <!-- Tab Navigation -->
+      <div class="admin-tabs" id="adminTabs">
+        <button class="admin-tab active" data-tab="applications" onclick="switchTab('applications')">
+          📋 Applications
+        </button>
+        <button class="admin-tab" data-tab="users" onclick="switchTab('users')">
+          👥 Users
+        </button>
+      </div>
+
       <!-- Stats -->
       <div class="stats-grid" id="statsGrid">
         <div class="stat-card">
@@ -88,10 +97,17 @@
             <p>Rejected</p>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15);">👥</div>
+          <div class="stat-info">
+            <h3 id="statUsers">-</h3>
+            <p>Registered Users</p>
+          </div>
+        </div>
       </div>
 
       <!-- Applications Section -->
-      <div class="admin-section">
+      <div class="admin-section" id="sectionApplications">
         <div class="admin-section-header">
           <h2>Applications</h2>
           <div class="filter-bar" style="margin-bottom: 0;">
@@ -134,6 +150,49 @@
           </table>
         </div>
       </div>
+
+      <!-- Users Section -->
+      <div class="admin-section hidden" id="sectionUsers">
+        <div class="admin-section-header">
+          <h2>User Management</h2>
+          <div class="filter-bar" style="margin-bottom: 0;">
+            <div class="filter-search" style="min-width: 200px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="userSearch" placeholder="Search name, email, phone...">
+            </div>
+            <div class="filter-tabs" id="userStatusFilter">
+              <button class="filter-tab active" data-status="all">All</button>
+              <button class="filter-tab" data-status="active">Active</button>
+              <button class="filter-tab" data-status="inactive">Inactive</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-wrapper">
+          <table class="data-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Applications</th>
+                <th>Status</th>
+                <th>Registered On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody">
+              <tr>
+                <td colspan="7" class="text-center" style="padding: 40px;">
+                  <div class="spinner" style="margin: 0 auto;"></div>
+                  <p class="mt-4" style="color: var(--text-secondary);">Loading users...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -169,6 +228,23 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeVerifyModal()">Cancel</button>
         <button class="btn" id="verifyConfirmBtn" onclick="confirmVerification()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Action Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 id="confirmTitle">Confirm Action</h3>
+        <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" style="color: var(--text-secondary);"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn" id="confirmActionBtn">Confirm</button>
       </div>
     </div>
   </div>

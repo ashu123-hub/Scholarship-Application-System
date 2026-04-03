@@ -2,6 +2,7 @@
 
 let currentStep = 1;
 let selectedScholarship = null;
+let currentUser = null;
 
 // Toast
 function showToast(message, type = 'success') {
@@ -20,6 +21,84 @@ function showToast(message, type = 'success') {
 
 function formatCurrency(amount) {
   return '₹' + Number(amount).toLocaleString('en-IN');
+}
+
+// ===== Auth Check =====
+async function checkAuth() {
+  try {
+    const response = await fetch('/api/auth/check');
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        currentUser = result.data;
+        // Show application form, hide login gate
+        document.getElementById('loginGate').classList.add('hidden');
+        document.getElementById('applicationForm').classList.remove('hidden');
+
+        // Update navbar
+        updateNavbarAuth(currentUser);
+
+        // Auto-fill user data
+        autoFillUserData();
+
+        return true;
+      }
+    }
+  } catch (e) {
+    console.log('Auth check failed:', e.message);
+  }
+
+  // Not logged in — show login gate
+  document.getElementById('loginGate').classList.remove('hidden');
+  document.getElementById('applicationForm').classList.add('hidden');
+
+  // Preserve scholarship query param in login redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const scholarshipId = urlParams.get('scholarship');
+  const loginBtn = document.getElementById('gateLoginBtn');
+  if (loginBtn && scholarshipId) {
+    loginBtn.href = `/login?redirect=/apply?scholarship=${scholarshipId}`;
+  }
+
+  return false;
+}
+
+function updateNavbarAuth(user) {
+  const guest = document.getElementById('navAuthGuest');
+  const userEl = document.getElementById('navAuthUser');
+
+  if (guest && userEl && user) {
+    guest.style.display = 'none';
+    userEl.style.display = 'block';
+
+    const initials = user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    document.getElementById('navUserAvatar').textContent = initials;
+    document.getElementById('navUserName').textContent = user.full_name.split(' ')[0];
+    document.getElementById('dropdownName').textContent = user.full_name;
+    document.getElementById('dropdownEmail').textContent = user.email;
+  }
+}
+
+async function logoutUser() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    showToast('Logged out successfully');
+    setTimeout(() => window.location.reload(), 500);
+  } catch (e) {
+    window.location.reload();
+  }
+}
+
+function autoFillUserData() {
+  if (!currentUser) return;
+
+  const nameInput = document.getElementById('fullName');
+  const emailInput = document.getElementById('email');
+  const phoneInput = document.getElementById('phone');
+
+  if (nameInput && !nameInput.value) nameInput.value = currentUser.full_name;
+  if (emailInput && !emailInput.value) emailInput.value = currentUser.email;
+  if (phoneInput && !phoneInput.value && currentUser.phone) phoneInput.value = currentUser.phone;
 }
 
 // Load scholarships into dropdown
@@ -372,6 +451,11 @@ async function submitApplication(e) {
       document.getElementById('trackingIdDisplay').textContent = result.data.tracking_id;
       showToast('Application submitted successfully!', 'success');
     } else {
+      if (result.redirect) {
+        // Not logged in — redirect to login
+        window.location.href = result.redirect + '?redirect=/apply';
+        return;
+      }
       showToast(result.message || 'Failed to submit application', 'error');
       submitBtn.disabled = false;
       submitBtn.innerHTML = '✅ Submit Application';
@@ -386,7 +470,12 @@ async function submitApplication(e) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-  loadScholarships();
+  // Check auth first
+  checkAuth().then(isLoggedIn => {
+    if (isLoggedIn) {
+      loadScholarships();
+    }
+  });
 
   document.getElementById('scholarshipSelect').addEventListener('change', onScholarshipChange);
 
@@ -414,6 +503,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('navToggle').addEventListener('click', () => {
     document.getElementById('navLinks').classList.toggle('open');
   });
+
+  // User dropdown
+  const userBtn = document.getElementById('navUserBtn');
+  if (userBtn) {
+    userBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('navUserDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => {
+      document.getElementById('navUserDropdown')?.classList.remove('open');
+    });
+  }
 
   // Remove error on input
   document.querySelectorAll('.form-input, .form-select').forEach(input => {
