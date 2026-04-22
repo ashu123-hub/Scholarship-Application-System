@@ -103,6 +103,34 @@ These endpoints are mounted purely for testing the IP Assignment logic via Postm
 
 *Note: The IP endpoints feature custom request logging (e.g., `[2026-04-22 15:30:00] POST /scholarships/apply 201 (45ms)`).*
 
+#### Postman Testing Examples
+
+**1. Apply for a Scholarship**
+*   **Method:** `POST`
+*   **URL:** `http://localhost:3000/scholarships/apply`
+*   **Body (JSON):**
+    ```json
+    {
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "9876543210",
+      "dob": "2005-06-15",
+      "annual_income": 250000,
+      "gpa": 8.5
+    }
+    ```
+
+**2. Approve/Reject Application**
+*   **Method:** `PUT`
+*   **URL:** `http://localhost:3000/scholarships/verify/{application_id}`
+*   **Body (JSON):**
+    ```json
+    {
+      "status": "Approved",
+      "remarks": "Income and GPA verified."
+    }
+    ```
+
 ---
 
 ## 🧾 Business Rules (Applied to Both Systems)
