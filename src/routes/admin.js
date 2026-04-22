@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { getDb, saveDatabase } = require('../database');
+const Admin = require('../models/Admin');
+const Application = require('../models/Application');
+const User = require('../models/User');
 
 // Middleware to check admin session
 function requireAdmin(req, res, next) {
@@ -13,37 +15,27 @@ function requireAdmin(req, res, next) {
 }
 
 // POST /api/admin/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const db = getDb();
     const { username, password } = req.body;
     
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Username and password are required' });
     }
 
-    const stmt = db.prepare('SELECT * FROM admins WHERE LOWER(username) = LOWER(?)');
-    stmt.bind([username.trim()]);
+    const admin = await Admin.findOne({ username: username.toLowerCase() });
 
-    if (stmt.step()) {
-      const admin = stmt.getAsObject();
-      stmt.free();
+    if (admin && bcrypt.compareSync(password, admin.password_hash)) {
+      req.session.isAdmin = true;
+      req.session.adminId = admin._id.toString();
+      req.session.adminName = admin.full_name;
 
-      if (bcrypt.compareSync(password, admin.password_hash)) {
-        req.session.isAdmin = true;
-        req.session.adminId = admin.id;
-        req.session.adminName = admin.full_name;
-
-        res.json({
-          success: true,
-          message: 'Login successful',
-          data: { full_name: admin.full_name }
-        });
-      } else {
-        res.status(401).json({ success: false, message: 'Invalid credentials' });
-      }
+      res.json({
+        success: true,
+        message: 'Login successful',
+        data: { full_name: admin.full_name }
+      });
     } else {
-      stmt.free();
       res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
   } catch (error) {
@@ -67,15 +59,13 @@ router.get('/check', requireAdmin, (req, res) => {
 });
 
 // GET /api/admin/stats — Dashboard statistics
-router.get('/stats', requireAdmin, (req, res) => {
+router.get('/stats', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
-
-    const total = db.exec("SELECT COUNT(*) FROM applications")[0].values[0][0];
-    const pending = db.exec("SELECT COUNT(*) FROM applications WHERE status = 'pending'")[0].values[0][0];
-    const approved = db.exec("SELECT COUNT(*) FROM applications WHERE status = 'approved'")[0].values[0][0];
-    const rejected = db.exec("SELECT COUNT(*) FROM applications WHERE status = 'rejected'")[0].values[0][0];
-    const totalUsers = db.exec("SELECT COUNT(*) FROM users")[0].values[0][0];
+    const total = await Application.countDocuments();
+    const pending = await Application.countDocuments({ status: 'pending' });
+    const approved = await Application.countDocuments({ status: 'approved' });
+    const rejected = await Application.countDocuments({ status: 'rejected' });
+    const totalUsers = await User.countDocuments();
 
     res.json({
       success: true,
@@ -88,47 +78,40 @@ router.get('/stats', requireAdmin, (req, res) => {
 });
 
 // GET /api/admin/applications — List all applications
-router.get('/applications', requireAdmin, (req, res) => {
+router.get('/applications', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
     const { status, search } = req.query;
 
-    let query = `
-      SELECT a.*, s.name as scholarship_name, s.amount as scholarship_amount, s.income_limit
-      FROM applications a
-      JOIN scholarships s ON a.scholarship_id = s.id
-    `;
-    const conditions = [];
-    const params = [];
+    let query = {};
 
     if (status && status !== 'all') {
-      conditions.push('a.status = ?');
-      params.push(status);
+      query.status = status;
     }
 
     if (search) {
-      conditions.push('(a.full_name LIKE ? OR a.email LIKE ? OR a.tracking_id LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      query.$or = [
+        { full_name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { tracking_id: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    const applications = await Application.find(query)
+      .populate('scholarship_id', 'name amount income_limit')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    query += ' ORDER BY a.created_at DESC';
+    const formattedApplications = applications.map(app => {
+      const formatted = { ...app };
+      if (app.scholarship_id) {
+        formatted.scholarship_name = app.scholarship_id.name;
+        formatted.scholarship_amount = app.scholarship_id.amount;
+        formatted.income_limit = app.scholarship_id.income_limit;
+      }
+      return formatted;
+    });
 
-    const stmt = db.prepare(query);
-    if (params.length > 0) {
-      stmt.bind(params);
-    }
-
-    const applications = [];
-    while (stmt.step()) {
-      applications.push(stmt.getAsObject());
-    }
-    stmt.free();
-
-    res.json({ success: true, data: applications });
+    res.json({ success: true, data: formattedApplications });
   } catch (error) {
     console.error('Error fetching applications:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch applications' });
@@ -136,24 +119,24 @@ router.get('/applications', requireAdmin, (req, res) => {
 });
 
 // GET /api/admin/applications/:id — Get single application detail
-router.get('/applications/:id', requireAdmin, (req, res) => {
+router.get('/applications/:id', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
-    const stmt = db.prepare(`
-      SELECT a.*, s.name as scholarship_name, s.amount as scholarship_amount, 
-             s.income_limit, s.category as scholarship_category, s.eligibility
-      FROM applications a
-      JOIN scholarships s ON a.scholarship_id = s.id
-      WHERE a.id = ?
-    `);
-    stmt.bind([parseInt(req.params.id)]);
+    const application = await Application.findById(req.params.id)
+      .populate('scholarship_id', 'name amount income_limit category eligibility')
+      .lean();
 
-    if (stmt.step()) {
-      const application = stmt.getAsObject();
-      stmt.free();
-      res.json({ success: true, data: application });
+    if (application) {
+      const formattedData = {
+        ...application,
+        scholarship_name: application.scholarship_id.name,
+        scholarship_amount: application.scholarship_id.amount,
+        income_limit: application.scholarship_id.income_limit,
+        scholarship_category: application.scholarship_id.category,
+        eligibility: application.scholarship_id.eligibility
+      };
+      
+      res.json({ success: true, data: formattedData });
     } else {
-      stmt.free();
       res.status(404).json({ success: false, message: 'Application not found' });
     }
   } catch (error) {
@@ -163,9 +146,8 @@ router.get('/applications/:id', requireAdmin, (req, res) => {
 });
 
 // PUT /api/admin/applications/:id/verify — Approve or reject
-router.put('/applications/:id/verify', requireAdmin, (req, res) => {
+router.put('/applications/:id/verify', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
     const { status, remarks } = req.body;
 
     if (!status || !['approved', 'rejected'].includes(status)) {
@@ -175,33 +157,24 @@ router.put('/applications/:id/verify', requireAdmin, (req, res) => {
       });
     }
 
-    // Check application exists
-    const checkStmt = db.prepare('SELECT id, status FROM applications WHERE id = ?');
-    checkStmt.bind([parseInt(req.params.id)]);
+    const application = await Application.findById(req.params.id);
 
-    if (!checkStmt.step()) {
-      checkStmt.free();
+    if (!application) {
       return res.status(404).json({ success: false, message: 'Application not found' });
     }
 
-    const app = checkStmt.getAsObject();
-    checkStmt.free();
-
-    if (app.status !== 'pending') {
+    if (application.status !== 'pending') {
       return res.status(400).json({
         success: false,
-        message: `Application has already been ${app.status}`
+        message: `Application has already been ${application.status}`
       });
     }
 
-    db.run(
-      `UPDATE applications 
-       SET status = ?, admin_remarks = ?, verified_by = ?, verified_at = datetime('now')
-       WHERE id = ?`,
-      [status, remarks || '', req.session.adminName, parseInt(req.params.id)]
-    );
-
-    saveDatabase();
+    application.status = status;
+    application.admin_remarks = remarks || '';
+    application.verified_by = req.session.adminName;
+    application.verified_at = new Date();
+    await application.save();
 
     res.json({
       success: true,
@@ -217,46 +190,32 @@ router.put('/applications/:id/verify', requireAdmin, (req, res) => {
 // ===== USER MANAGEMENT =====
 
 // GET /api/admin/users — List all registered users
-router.get('/users', requireAdmin, (req, res) => {
+router.get('/users', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
     const { search, status } = req.query;
 
-    let query = 'SELECT id, email, full_name, phone, is_verified, is_active, created_at FROM users';
-    const conditions = [];
-    const params = [];
+    let query = {};
 
     if (status === 'active') {
-      conditions.push('is_active = 1');
+      query.is_active = true;
     } else if (status === 'inactive') {
-      conditions.push('is_active = 0');
+      query.is_active = false;
     }
 
     if (search) {
-      conditions.push('(full_name LIKE ? OR email LIKE ? OR phone LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      query.$or = [
+        { full_name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    const users = await User.find(query).select('-password_hash').sort({ createdAt: -1 }).lean();
 
-    query += ' ORDER BY created_at DESC';
-
-    const stmt = db.prepare(query);
-    if (params.length > 0) {
-      stmt.bind(params);
+    // Attach application counts
+    for (let user of users) {
+      user.application_count = await Application.countDocuments({ user_id: user._id });
     }
-
-    const users = [];
-    while (stmt.step()) {
-      const user = stmt.getAsObject();
-      // Count user's applications
-      const countResult = db.exec(`SELECT COUNT(*) FROM applications WHERE user_id = ${user.id}`);
-      user.application_count = countResult[0].values[0][0];
-      users.push(user);
-    }
-    stmt.free();
 
     res.json({ success: true, data: users });
   } catch (error) {
@@ -266,14 +225,12 @@ router.get('/users', requireAdmin, (req, res) => {
 });
 
 // GET /api/admin/users/stats — User statistics
-router.get('/users/stats', requireAdmin, (req, res) => {
+router.get('/users/stats', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
-
-    const total = db.exec("SELECT COUNT(*) FROM users")[0].values[0][0];
-    const active = db.exec("SELECT COUNT(*) FROM users WHERE is_active = 1")[0].values[0][0];
-    const inactive = db.exec("SELECT COUNT(*) FROM users WHERE is_active = 0")[0].values[0][0];
-    const verified = db.exec("SELECT COUNT(*) FROM users WHERE is_verified = 1")[0].values[0][0];
+    const total = await User.countDocuments();
+    const active = await User.countDocuments({ is_active: true });
+    const inactive = await User.countDocuments({ is_active: false });
+    const verified = await User.countDocuments({ is_verified: true });
 
     res.json({
       success: true,
@@ -286,31 +243,22 @@ router.get('/users/stats', requireAdmin, (req, res) => {
 });
 
 // PUT /api/admin/users/:id/toggle — Toggle user active status
-router.put('/users/:id/toggle', requireAdmin, (req, res) => {
+router.put('/users/:id/toggle', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
-    const userId = parseInt(req.params.id);
+    const user = await User.findById(req.params.id);
 
-    const stmt = db.prepare('SELECT id, is_active, full_name FROM users WHERE id = ?');
-    stmt.bind([userId]);
-
-    if (!stmt.step()) {
-      stmt.free();
+    if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const user = stmt.getAsObject();
-    stmt.free();
+    user.is_active = !user.is_active;
+    await user.save();
 
-    const newStatus = user.is_active ? 0 : 1;
-    db.run('UPDATE users SET is_active = ? WHERE id = ?', [newStatus, userId]);
-    saveDatabase();
-
-    const action = newStatus ? 'activated' : 'deactivated';
+    const action = user.is_active ? 'activated' : 'deactivated';
     res.json({
       success: true,
       message: `User "${user.full_name}" has been ${action}.`,
-      data: { is_active: newStatus }
+      data: { is_active: user.is_active }
     });
   } catch (error) {
     console.error('Toggle user error:', error);
@@ -319,27 +267,18 @@ router.put('/users/:id/toggle', requireAdmin, (req, res) => {
 });
 
 // DELETE /api/admin/users/:id — Delete a user and their applications
-router.delete('/users/:id', requireAdmin, (req, res) => {
+router.delete('/users/:id', requireAdmin, async (req, res) => {
   try {
-    const db = getDb();
-    const userId = parseInt(req.params.id);
+    const user = await User.findById(req.params.id);
 
-    const stmt = db.prepare('SELECT id, full_name, email FROM users WHERE id = ?');
-    stmt.bind([userId]);
-
-    if (!stmt.step()) {
-      stmt.free();
+    if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const user = stmt.getAsObject();
-    stmt.free();
-
     // Delete user's applications first
-    db.run('DELETE FROM applications WHERE user_id = ?', [userId]);
+    await Application.deleteMany({ user_id: user._id });
     // Delete the user
-    db.run('DELETE FROM users WHERE id = ?', [userId]);
-    saveDatabase();
+    await User.findByIdAndDelete(user._id);
 
     res.json({
       success: true,

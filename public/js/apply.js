@@ -198,18 +198,28 @@ function validateIncome() {
     alert.style.display = 'none';
     return;
   }
+  
+  alert.style.display = 'flex';
 
   const alertIcon = alert.querySelector('.alert-icon');
   const alertMessage = alert.querySelector('.alert-message');
 
-  if (income <= selectedScholarship.income_limit) {
-    alert.className = 'income-alert eligible';
-    alertIcon.textContent = '✅';
-    alertMessage.textContent = `You are eligible! Your income (${formatCurrency(income)}) is within the limit of ${formatCurrency(selectedScholarship.income_limit)}.`;
-  } else {
+  if (income > 600000) {
+    alert.className = 'income-alert not-eligible';
+    alertIcon.textContent = '❌';
+    alertMessage.textContent = `Not eligible. Annual income exceeds the IP strict limit of ₹6,00,000.`;
+  } else if (income > selectedScholarship.income_limit) {
     alert.className = 'income-alert not-eligible';
     alertIcon.textContent = '❌';
     alertMessage.textContent = `Not eligible. Your income (${formatCurrency(income)}) exceeds the limit of ${formatCurrency(selectedScholarship.income_limit)} for this scholarship.`;
+  } else if (income <= 300000) {
+    alert.className = 'income-alert eligible';
+    alertIcon.textContent = '✅';
+    alertMessage.textContent = `Eligible for Full Scholarship! (Income ≤ ₹3,00,000).`;
+  } else {
+    alert.className = 'income-alert eligible';
+    alertIcon.textContent = '✅';
+    alertMessage.textContent = `Eligible for Partial Scholarship! (Income ₹3,00,001 - ₹6,00,000).`;
   }
 }
 
@@ -286,6 +296,22 @@ function validateStep(step) {
       phone.closest('.form-group').classList.add('error');
       isValid = false;
     }
+
+    // IP Age Rule Validation
+    const dobInput = document.getElementById('dob');
+    if (dobInput.value) {
+      const birthDate = new Date(dobInput.value);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+      
+      if (age < 15 || age > 30) {
+        showToast(`Age ${age} is not eligible. Must be between 15 and 30.`, 'warning');
+        isValid = false;
+        dobInput.closest('.form-group').classList.add('error');
+      }
+    }
   }
 
   if (step === 2) {
@@ -300,6 +326,18 @@ function validateStep(step) {
         group.classList.remove('error');
       }
     });
+
+    // IP Percentage Rule Validation
+    const gpaInput = document.getElementById('gpa');
+    if (gpaInput.value) {
+      const gpaValue = parseFloat(gpaInput.value);
+      const percentage = gpaValue <= 10 ? gpaValue * 10 : gpaValue;
+      if (percentage < 60) {
+        showToast(`Score (${percentage}%) is below minimum 60% requirement.`, 'warning');
+        isValid = false;
+        gpaInput.closest('.form-group').classList.add('error');
+      }
+    }
   }
 
   if (step === 3) {
@@ -312,7 +350,10 @@ function validateStep(step) {
     }
 
     // Check income limit
-    if (selectedScholarship && parseFloat(income.value) > selectedScholarship.income_limit) {
+    if (parseFloat(income.value) > 600000) {
+      showToast(`Income exceeds maximum allowed IP limit of ₹6,00,000`, 'error');
+      isValid = false;
+    } else if (selectedScholarship && parseFloat(income.value) > selectedScholarship.income_limit) {
       showToast(`Your income exceeds the limit of ${formatCurrency(selectedScholarship.income_limit)} for this scholarship`, 'error');
       isValid = false;
     }
@@ -341,8 +382,29 @@ function prevStep() {
   goToStep(currentStep - 1);
 }
 
+function calculateEstimatedAmount(income, gpa) {
+  const gpaValue = gpa ? parseFloat(gpa) : 0;
+  const percentage = gpaValue <= 10 ? gpaValue * 10 : gpaValue;
+  
+  let amount = 0;
+  if (income <= 300000) {
+    amount = percentage >= 80 ? 50000 : 30000;
+  } else {
+    amount = percentage >= 80 ? 25000 : 15000;
+  }
+  
+  if (amount > selectedScholarship.amount) {
+    amount = selectedScholarship.amount;
+  }
+  return amount;
+}
+
 function populateReview() {
   const review = document.getElementById('reviewContent');
+  
+  const income = parseFloat(document.getElementById('annualIncome').value);
+  const gpa = parseFloat(document.getElementById('gpa').value);
+  const estimatedAmount = calculateEstimatedAmount(income, gpa);
 
   review.innerHTML = `
     <h4 style="color: var(--accent-blue-light); margin-bottom: 12px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Scholarship</h4>
@@ -351,8 +413,8 @@ function populateReview() {
       <span class="value">${selectedScholarship.name}</span>
     </div>
     <div class="detail-item">
-      <span class="label">Award Amount</span>
-      <span class="value">${formatCurrency(selectedScholarship.amount)}</span>
+      <span class="label">Estimated Award</span>
+      <span class="value">${formatCurrency(estimatedAmount)} <span style="font-size:0.8rem;color:var(--text-muted)">(Max: ${formatCurrency(selectedScholarship.amount)})</span></span>
     </div>
     <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
 

@@ -3,7 +3,14 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, saveDatabase } = require('../database');
+const Application = require('../models/Application');
+const Scholarship = require('../models/Scholarship');
+const {
+  checkIncomeEligibility,
+  checkGradeEligibility,
+  checkAgeEligibility,
+  calculateScholarshipAmount
+} = require('../utils/helpers');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -45,9 +52,8 @@ function requireUser(req, res, next) {
 }
 
 // POST /api/applications — Submit a new application (requires login)
-router.post('/', requireUser, upload.single('income_proof'), (req, res) => {
+router.post('/', requireUser, upload.single('income_proof'), async (req, res) => {
   try {
-    const db = getDb();
     const {
       scholarship_id, full_name, email, phone, dob, gender, address,
       institution, course, year_of_study, gpa, annual_income
@@ -63,65 +69,111 @@ router.post('/', requireUser, upload.single('income_proof'), (req, res) => {
     }
 
     // Get scholarship to check income limit
-    const scholarshipStmt = db.prepare('SELECT * FROM scholarships WHERE id = ?');
-    scholarshipStmt.bind([parseInt(scholarship_id)]);
+    const scholarship = await Scholarship.findById(scholarship_id);
 
-    if (!scholarshipStmt.step()) {
-      scholarshipStmt.free();
+    if (!scholarship) {
       return res.status(404).json({
         success: false,
         message: 'Scholarship not found'
       });
     }
 
-    const scholarship = scholarshipStmt.getAsObject();
-    scholarshipStmt.free();
+    // *** CALCULATE AGE ***
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
 
-    // *** INCOME LIMIT VALIDATION ***
-    const incomeValue = parseFloat(annual_income);
-    if (incomeValue > scholarship.income_limit) {
+    const ageCheck = checkAgeEligibility(age);
+    if (!ageCheck.eligible) {
       return res.status(400).json({
         success: false,
-        message: `Your annual family income (₹${incomeValue.toLocaleString()}) exceeds the income limit of ₹${scholarship.income_limit.toLocaleString()} for this scholarship.`,
-        error_type: 'INCOME_LIMIT_EXCEEDED',
-        income_limit: scholarship.income_limit,
-        submitted_income: incomeValue
+        message: ageCheck.reason
       });
     }
 
+    // *** CALCULATE PERCENTAGE ***
+    // If gpa is entered as <= 10, assume it's CGPA and convert to percentage (* 10 or 9.5).
+    // If gpa > 10, assume user entered percentage directly.
+    const gpaValue = gpa ? parseFloat(gpa) : 0;
+    const percentage = gpaValue <= 10 ? gpaValue * 10 : gpaValue;
+
+    const gradeCheck = checkGradeEligibility(percentage);
+    if (!gradeCheck.eligible) {
+      return res.status(400).json({
+        success: false,
+        message: gradeCheck.reason
+      });
+    }
+
+    // *** INCOME LIMIT VALIDATION (IP RULES) ***
+    const incomeValue = parseFloat(annual_income);
+    
+    // Check ScholarHub specific scholarship income limit first
+    if (incomeValue > scholarship.income_limit) {
+      return res.status(400).json({
+        success: false,
+        message: `Your annual family income (₹${incomeValue.toLocaleString()}) exceeds the income limit of ₹${scholarship.income_limit.toLocaleString()} for this scholarship.`
+      });
+    }
+
+    // Check IP generalized income limit
+    const incomeCheck = checkIncomeEligibility(incomeValue);
+    if (!incomeCheck.eligible) {
+      return res.status(400).json({
+        success: false,
+        message: incomeCheck.reason
+      });
+    }
+
+    // Calculate Dynamic Scholarship Amount based on IP rules
+    let calculatedAmount = calculateScholarshipAmount(incomeValue, percentage);
+
+    // Ensure we don't grant more than the scholarship's maximum amount
+    if (calculatedAmount > scholarship.amount) {
+      calculatedAmount = scholarship.amount;
+    }
+
     // Check for duplicate application
-    const dupStmt = db.prepare(
-      'SELECT id FROM applications WHERE email = ? AND scholarship_id = ?'
-    );
-    dupStmt.bind([email, parseInt(scholarship_id)]);
-    if (dupStmt.step()) {
-      dupStmt.free();
+    const existingApplication = await Application.findOne({
+      email: email,
+      scholarship_id: scholarship_id
+    });
+
+    if (existingApplication) {
       return res.status(400).json({
         success: false,
         message: 'You have already applied for this scholarship with this email address'
       });
     }
-    dupStmt.free();
 
     // Generate tracking ID
     const trackingId = 'SCH-' + uuidv4().slice(0, 8).toUpperCase();
 
-    // Insert application with user_id
-    const incomProofPath = req.file ? req.file.filename : null;
-    db.run(
-      `INSERT INTO applications 
-       (tracking_id, scholarship_id, user_id, full_name, email, phone, dob, gender, address,
-        institution, course, year_of_study, gpa, annual_income, income_proof_path)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        trackingId, parseInt(scholarship_id), req.session.userId,
-        full_name, email, phone, dob, gender,
-        address || '', institution, course, parseInt(year_of_study),
-        gpa ? parseFloat(gpa) : null, incomeValue, incomProofPath
-      ]
-    );
-
-    saveDatabase();
+    // Insert application
+    const incomeProofPath = req.file ? req.file.filename : null;
+    
+    await Application.create({
+      tracking_id: trackingId,
+      scholarship_id: scholarship._id,
+      user_id: req.session.userId,
+      full_name,
+      email,
+      phone,
+      dob,
+      gender,
+      address: address || '',
+      institution,
+      course,
+      year_of_study: parseInt(year_of_study),
+      gpa: gpaValue,
+      annual_income: incomeValue,
+      calculated_amount: calculatedAmount,
+      income_proof_path: incomeProofPath
+    });
 
     res.status(201).json({
       success: true,
@@ -129,6 +181,7 @@ router.post('/', requireUser, upload.single('income_proof'), (req, res) => {
       data: {
         tracking_id: trackingId,
         scholarship_name: scholarship.name,
+        calculated_amount: calculatedAmount,
         status: 'pending'
       }
     });
@@ -139,25 +192,26 @@ router.post('/', requireUser, upload.single('income_proof'), (req, res) => {
 });
 
 // GET /api/applications/track/:trackingId — Track application
-router.get('/track/:trackingId', (req, res) => {
+router.get('/track/:trackingId', async (req, res) => {
   try {
-    const db = getDb();
-    const stmt = db.prepare(`
-      SELECT a.*, s.name as scholarship_name, s.amount as scholarship_amount
-      FROM applications a
-      JOIN scholarships s ON a.scholarship_id = s.id
-      WHERE a.tracking_id = ?
-    `);
-    stmt.bind([req.params.trackingId.toUpperCase()]);
+    const application = await Application.findOne({ tracking_id: req.params.trackingId.toUpperCase() })
+      .populate('scholarship_id', 'name amount')
+      .lean();
 
-    if (stmt.step()) {
-      const application = stmt.getAsObject();
-      stmt.free();
-      // Remove sensitive paths
-      delete application.income_proof_path;
-      res.json({ success: true, data: application });
+    if (application) {
+      // Format the response to match frontend expectations
+      const formattedData = {
+        ...application,
+        scholarship_name: application.scholarship_id.name,
+        // Show the dynamically calculated amount instead of the flat scholarship amount
+        scholarship_amount: application.calculated_amount || application.scholarship_id.amount
+      };
+      
+      delete formattedData.scholarship_id;
+      delete formattedData.income_proof_path; // Remove sensitive path
+
+      res.json({ success: true, data: formattedData });
     } else {
-      stmt.free();
       res.status(404).json({
         success: false,
         message: 'No application found with this tracking ID'

@@ -1,38 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { getDb } = require('../database');
+const Scholarship = require('../models/Scholarship');
 
 // GET /api/scholarships — List all active scholarships
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const db = getDb();
     const { category, search } = req.query;
 
-    let query = 'SELECT * FROM scholarships WHERE is_active = 1';
-    const params = [];
+    let query = { is_active: true };
 
     if (category && category !== 'all') {
-      query += ' AND category = ?';
-      params.push(category);
+      query.category = category;
     }
 
     if (search) {
-      query += ' AND (name LIKE ? OR description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    query += ' ORDER BY deadline ASC';
-
-    const stmt = db.prepare(query);
-    if (params.length > 0) {
-      stmt.bind(params);
-    }
-
-    const scholarships = [];
-    while (stmt.step()) {
-      scholarships.push(stmt.getAsObject());
-    }
-    stmt.free();
+    const scholarships = await Scholarship.find(query).sort({ deadline: 1 });
 
     res.json({ success: true, data: scholarships });
   } catch (error) {
@@ -42,18 +30,13 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/scholarships/:id — Get single scholarship
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const db = getDb();
-    const stmt = db.prepare('SELECT * FROM scholarships WHERE id = ?');
-    stmt.bind([parseInt(req.params.id)]);
+    const scholarship = await Scholarship.findById(req.params.id);
 
-    if (stmt.step()) {
-      const scholarship = stmt.getAsObject();
-      stmt.free();
+    if (scholarship) {
       res.json({ success: true, data: scholarship });
     } else {
-      stmt.free();
       res.status(404).json({ success: false, message: 'Scholarship not found' });
     }
   } catch (error) {
@@ -63,12 +46,10 @@ router.get('/:id', (req, res) => {
 });
 
 // GET /api/scholarships/categories/list — Get unique categories
-router.get('/categories/list', (req, res) => {
+router.get('/categories/list', async (req, res) => {
   try {
-    const db = getDb();
-    const results = db.exec('SELECT DISTINCT category FROM scholarships WHERE is_active = 1 ORDER BY category');
-    const categories = results.length > 0 ? results[0].values.map(v => v[0]) : [];
-    res.json({ success: true, data: categories });
+    const categories = await Scholarship.distinct('category', { is_active: true });
+    res.json({ success: true, data: categories.sort() });
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch categories' });

@@ -67,7 +67,7 @@
               </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
-              📧 Create Account & Send OTP
+              📧 Create Account
             </button>
             <p class="auth-link">
               Already have an account? <a href="/login">Login here</a>
@@ -75,33 +75,7 @@
           </form>
         </div>
 
-        <!-- Step 2: OTP Verification -->
-        <div class="auth-step" id="stepOTP">
-          <div class="auth-header">
-            <div class="otp-icon">📧</div>
-            <h2>Verify Your Email</h2>
-            <p>We've sent a 6-digit OTP to <strong id="otpEmailDisplay">your email</strong></p>
-          </div>
-          <form id="otpForm" class="auth-form">
-            <div class="otp-inputs" id="otpInputs">
-              <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric" autocomplete="one-time-code">
-              <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric">
-            </div>
-            <button type="submit" class="btn btn-primary btn-block" id="verifyOTPBtn">
-              ✅ Verify OTP
-            </button>
-            <div class="otp-resend">
-              <span id="resendTimer">Resend OTP in <strong>60s</strong></span>
-              <button type="button" class="btn-link" id="resendBtn" style="display:none;" onclick="resendOTP()">
-                🔄 Resend OTP
-              </button>
-            </div>
-          </form>
-        </div>
+
 
         <!-- Step 3: Success -->
         <div class="auth-step" id="stepSuccess">

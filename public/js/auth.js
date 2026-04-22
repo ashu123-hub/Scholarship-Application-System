@@ -1,8 +1,5 @@
 // === Auth.js — Login & Registration Logic ===
 
-let currentEmail = '';
-let resendTimerInterval = null;
-
 // ===== Toast =====
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
@@ -35,74 +32,6 @@ function showStep(stepId) {
   document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
   const step = document.getElementById(stepId);
   if (step) step.classList.add('active');
-}
-
-// ===== OTP Input Auto-focus =====
-function initOTPInputs(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const inputs = container.querySelectorAll('.otp-box');
-
-  inputs.forEach((input, index) => {
-    input.value = '';
-
-    input.addEventListener('input', (e) => {
-      const val = e.target.value.replace(/\D/g, '');
-      e.target.value = val.slice(0, 1);
-      if (val && index < inputs.length - 1) {
-        inputs[index + 1].focus();
-      }
-    });
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !input.value && index > 0) {
-        inputs[index - 1].focus();
-        inputs[index - 1].value = '';
-      }
-    });
-
-    input.addEventListener('paste', (e) => {
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-      for (let i = 0; i < Math.min(text.length, inputs.length); i++) {
-        inputs[i].value = text[i];
-      }
-      const nextIndex = Math.min(text.length, inputs.length - 1);
-      inputs[nextIndex].focus();
-    });
-  });
-
-  // Auto-focus first input
-  setTimeout(() => inputs[0]?.focus(), 200);
-}
-
-function getOTPValue(containerId) {
-  const container = document.getElementById(containerId);
-  const inputs = container.querySelectorAll('.otp-box');
-  return Array.from(inputs).map(i => i.value).join('');
-}
-
-// ===== Resend Timer =====
-function startResendTimer(timerSpanId, resendBtnId, seconds = 60) {
-  const timerSpan = document.getElementById(timerSpanId);
-  const resendBtn = document.getElementById(resendBtnId);
-  let remaining = seconds;
-
-  timerSpan.style.display = 'inline';
-  resendBtn.style.display = 'none';
-
-  if (resendTimerInterval) clearInterval(resendTimerInterval);
-
-  resendTimerInterval = setInterval(() => {
-    remaining--;
-    timerSpan.innerHTML = `Resend OTP in <strong>${remaining}s</strong>`;
-
-    if (remaining <= 0) {
-      clearInterval(resendTimerInterval);
-      timerSpan.style.display = 'none';
-      resendBtn.style.display = 'inline-block';
-    }
-  }, 1000);
 }
 
 // ===== REGISTRATION =====
@@ -152,12 +81,10 @@ if (registerForm) {
       const result = await res.json();
 
       if (result.success) {
-        currentEmail = result.data.email;
-        document.getElementById('otpEmailDisplay').textContent = currentEmail;
-        showStep('stepOTP');
-        initOTPInputs('otpInputs');
-        startResendTimer('resendTimer', 'resendBtn');
+        showStep('stepSuccess');
         showToast(result.message, 'success');
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/apply';
+        setTimeout(() => window.location.href = redirect, 1500);
       } else {
         showToast(result.message, 'error');
       }
@@ -166,63 +93,8 @@ if (registerForm) {
     }
 
     btn.disabled = false;
-    btn.innerHTML = '📧 Create Account & Send OTP';
+    btn.innerHTML = 'Create Account';
   });
-}
-
-// ===== REGISTER OTP VERIFY =====
-const otpForm = document.getElementById('otpForm');
-if (otpForm) {
-  otpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const otp = getOTPValue('otpInputs');
-    if (otp.length !== 6) {
-      return showToast('Please enter the complete 6-digit OTP', 'warning');
-    }
-
-    const btn = document.getElementById('verifyOTPBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div> Verifying...';
-
-    try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, otp })
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        showStep('stepSuccess');
-        showToast(result.message, 'success');
-      } else {
-        showToast(result.message, 'error');
-      }
-    } catch (error) {
-      showToast('Verification failed. Please try again.', 'error');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '✅ Verify OTP';
-  });
-}
-
-// ===== RESEND OTP (Register) =====
-async function resendOTP() {
-  try {
-    const res = await fetch('/api/auth/resend-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentEmail, purpose: 'verify' })
-    });
-    const result = await res.json();
-    showToast(result.message, result.success ? 'success' : 'error');
-    if (result.success) startResendTimer('resendTimer', 'resendBtn');
-  } catch (error) {
-    showToast('Failed to resend OTP', 'error');
-  }
 }
 
 // ===== LOGIN =====
@@ -252,21 +124,13 @@ if (loginForm) {
       const result = await res.json();
 
       if (result.success) {
-        // Password correct — move to OTP step
-        currentEmail = result.data.email;
-        document.getElementById('loginOtpEmailDisplay').textContent = currentEmail;
-        showStep('stepLoginOTP');
-        initOTPInputs('loginOtpInputs');
-        startResendTimer('loginResendTimer', 'loginResendBtn');
+        const userNameEl = document.getElementById('loginUserName');
+        if (userNameEl) userNameEl.textContent = result.data.full_name;
+        showStep('stepLoginSuccess');
         showToast(result.message, 'success');
-      } else if (res.status === 403 && result.data && result.data.step === 'verify_otp') {
-        // Email not verified — show email verification
-        currentEmail = result.data.email;
-        document.getElementById('verifyEmailDisplay').textContent = currentEmail;
-        showStep('stepVerifyEmail');
-        initOTPInputs('verifyEmailOtpInputs');
-        startResendTimer('emailResendTimer', 'emailResendBtn');
-        showToast(result.message, 'warning');
+
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/apply';
+        setTimeout(() => window.location.href = redirect, 1500);
       } else {
         showToast(result.message, 'error');
       }
@@ -275,124 +139,6 @@ if (loginForm) {
     }
 
     btn.disabled = false;
-    btn.innerHTML = '🔐 Login & Send OTP';
+    btn.innerHTML = 'Login';
   });
-}
-
-// ===== LOGIN OTP VERIFY =====
-const loginOtpForm = document.getElementById('loginOtpForm');
-if (loginOtpForm) {
-  loginOtpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const otp = getOTPValue('loginOtpInputs');
-    if (otp.length !== 6) {
-      return showToast('Please enter the complete 6-digit OTP', 'warning');
-    }
-
-    const btn = document.getElementById('verifyLoginOTPBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div> Verifying...';
-
-    try {
-      const res = await fetch('/api/auth/verify-login-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, otp })
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        document.getElementById('loginUserName').textContent = result.data.full_name;
-        showStep('stepLoginSuccess');
-        showToast(result.message, 'success');
-
-        // Redirect after short delay
-        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/apply';
-        setTimeout(() => window.location.href = redirect, 1500);
-      } else {
-        showToast(result.message, 'error');
-      }
-    } catch (error) {
-      showToast('Login failed. Please try again.', 'error');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '✅ Verify & Login';
-  });
-}
-
-// ===== RESEND LOGIN OTP =====
-async function resendLoginOTP() {
-  try {
-    const res = await fetch('/api/auth/resend-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentEmail, purpose: 'login' })
-    });
-    const result = await res.json();
-    showToast(result.message, result.success ? 'success' : 'error');
-    if (result.success) startResendTimer('loginResendTimer', 'loginResendBtn');
-  } catch (error) {
-    showToast('Failed to resend OTP', 'error');
-  }
-}
-
-// ===== VERIFY EMAIL OTP (from login page) =====
-const verifyEmailForm = document.getElementById('verifyEmailForm');
-if (verifyEmailForm) {
-  verifyEmailForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const otp = getOTPValue('verifyEmailOtpInputs');
-    if (otp.length !== 6) {
-      return showToast('Please enter the complete 6-digit OTP', 'warning');
-    }
-
-    const btn = document.getElementById('verifyEmailOTPBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div> Verifying...';
-
-    try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, otp })
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        document.getElementById('loginUserName').textContent = result.data.full_name;
-        showStep('stepLoginSuccess');
-        showToast('Email verified & logged in!', 'success');
-
-        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/apply';
-        setTimeout(() => window.location.href = redirect, 1500);
-      } else {
-        showToast(result.message, 'error');
-      }
-    } catch (error) {
-      showToast('Verification failed.', 'error');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '✅ Verify Email';
-  });
-}
-
-async function resendVerifyEmailOTP() {
-  try {
-    const res = await fetch('/api/auth/resend-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentEmail, purpose: 'verify' })
-    });
-    const result = await res.json();
-    showToast(result.message, result.success ? 'success' : 'error');
-    if (result.success) startResendTimer('emailResendTimer', 'emailResendBtn');
-  } catch (error) {
-    showToast('Failed to resend OTP', 'error');
-  }
 }

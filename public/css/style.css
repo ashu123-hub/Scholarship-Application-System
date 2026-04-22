@@ -8,41 +8,41 @@
 /* === CSS Variables === */
 :root {
   /* Colors */
-  --bg-primary: #06080f;
-  --bg-secondary: #0c1022;
-  --bg-card: rgba(15, 23, 52, 0.6);
-  --bg-card-hover: rgba(20, 30, 65, 0.8);
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-hover: rgba(255, 255, 255, 0.06);
+  --bg-primary: #faf8ff;
+  --bg-secondary: #f2f3ff;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --bg-glass: rgba(70, 72, 212, 0.05);
+  --bg-glass-hover: rgba(70, 72, 212, 0.1);
 
-  --text-primary: #e8ecf4;
-  --text-secondary: #8892a8;
-  --text-muted: #5a6478;
+  --text-primary: #131b2e;
+  --text-secondary: #464554;
+  --text-muted: #767586;
   --text-white: #ffffff;
 
-  --accent-blue: #3b82f6;
-  --accent-blue-light: #60a5fa;
-  --accent-purple: #8b5cf6;
-  --accent-pink: #ec4899;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-red: #ef4444;
+  --accent-blue: #4648d4;
+  --accent-blue-light: #6063ee;
+  --accent-purple: #8127cf;
+  --accent-pink: #a12e70;
+  --accent-green: #0d9466;
+  --accent-amber: #b66a00;
+  --accent-red: #ba1a1a;
 
-  --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  --gradient-secondary: linear-gradient(135deg, #8b5cf6, #ec4899);
-  --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-danger: linear-gradient(135deg, #ef4444, #f97316);
-  --gradient-warm: linear-gradient(135deg, #f59e0b, #ec4899);
+  --gradient-primary: linear-gradient(135deg, #4648d4, #8127cf);
+  --gradient-secondary: linear-gradient(135deg, #8127cf, #a12e70);
+  --gradient-success: linear-gradient(135deg, #0d9466, #09734e);
+  --gradient-danger: linear-gradient(135deg, #ba1a1a, #93000a);
+  --gradient-warm: linear-gradient(135deg, #b66a00, #a12e70);
 
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-light: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(70, 72, 212, 0.1);
+  --border-light: rgba(70, 72, 212, 0.2);
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-  --shadow-glow-blue: 0 0 30px rgba(59, 130, 246, 0.15);
-  --shadow-glow-purple: 0 0 30px rgba(139, 92, 246, 0.15);
+  --shadow-sm: 0 2px 8px rgba(20, 20, 40, 0.05);
+  --shadow-md: 0 4px 20px rgba(20, 20, 40, 0.08);
+  --shadow-lg: 0 8px 40px rgba(20, 20, 40, 0.12);
+  --shadow-glow-blue: 0 0 30px rgba(70, 72, 212, 0.2);
+  --shadow-glow-purple: 0 0 30px rgba(129, 39, 207, 0.2);
 
   /* Spacing */
   --container-max: 1280px;
@@ -56,9 +56,9 @@
   --radius-full: 9999px;
 
   /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* === Reset & Base === */
@@ -92,19 +92,20 @@ body::before {
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 30% at 50% 80%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(70, 72, 212, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(129, 39, 207, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 50% 80%, rgba(161, 46, 112, 0.04) 0%, transparent 50%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 /* === Typography === */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
   line-height: 1.2;
-  color: var(--text-white);
+  color: var(--text-primary);
+  letter-spacing: -0.04em;
 }
 
 h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
@@ -136,16 +137,16 @@ a:hover {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(6, 8, 15, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(250, 248, 255, 0.8);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border-bottom: 1px solid var(--border-color);
   transition: all var(--transition-base);
 }
 
 .navbar.scrolled {
-  background: rgba(6, 8, 15, 0.95);
-  box-shadow: var(--shadow-md);
+  background: rgba(250, 248, 255, 0.95);
+  box-shadow: var(--shadow-sm);
 }
 
 .navbar .container {
@@ -174,11 +175,11 @@ a:hover {
 }
 
 .nav-brand-text {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
   font-size: 1.25rem;
-  color: var(--text-white);
-  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  letter-spacing: -0.04em;
 }
 
 .nav-links {
@@ -199,7 +200,7 @@ a:hover {
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: var(--text-white);
+  color: var(--accent-blue);
   background: var(--bg-glass-hover);
 }
 
@@ -237,8 +238,8 @@ a:hover {
     top: 72px;
     left: 0;
     right: 0;
-    background: rgba(6, 8, 15, 0.98);
-    backdrop-filter: blur(20px);
+    background: rgba(250, 248, 255, 0.98);
+    backdrop-filter: blur(40px);
     flex-direction: column;
     padding: 16px;
     border-bottom: 1px solid var(--border-color);
@@ -277,11 +278,11 @@ a:hover {
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(70, 72, 212, 0.1);
+  border: 1px solid rgba(70, 72, 212, 0.2);
   border-radius: var(--radius-full);
   font-size: 0.85rem;
-  color: var(--accent-blue-light);
+  color: var(--accent-blue);
   margin-bottom: 24px;
   animation: fadeInUp 0.6s ease;
 }
@@ -438,27 +439,27 @@ a:hover {
 }
 
 .badge-merit {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-blue-light);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(70, 72, 212, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(70, 72, 212, 0.25);
 }
 
 .badge-need {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(13, 148, 102, 0.15);
   color: var(--accent-green);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(13, 148, 102, 0.25);
 }
 
 .badge-category {
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(129, 39, 207, 0.15);
   color: var(--accent-purple);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  border: 1px solid rgba(129, 39, 207, 0.25);
 }
 
 .badge-research {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(182, 106, 0, 0.15);
   color: var(--accent-amber);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(182, 106, 0, 0.25);
 }
 
 /* Status badges */

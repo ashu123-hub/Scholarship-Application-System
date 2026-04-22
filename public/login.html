@@ -52,7 +52,7 @@
               </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-              🔐 Login & Send OTP
+              🔐 Login
             </button>
             <p class="auth-link">
               Don't have an account? <a href="/register">Create one here</a>
@@ -60,61 +60,7 @@
           </form>
         </div>
 
-        <!-- Step 2: Login OTP Verification -->
-        <div class="auth-step" id="stepLoginOTP">
-          <div class="auth-header">
-            <div class="otp-icon">🔐</div>
-            <h2>Verify Login OTP</h2>
-            <p>Enter the 6-digit code sent to <strong id="loginOtpEmailDisplay">your email</strong></p>
-          </div>
-          <form id="loginOtpForm" class="auth-form">
-            <div class="otp-inputs" id="loginOtpInputs">
-              <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric" autocomplete="one-time-code">
-              <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric">
-            </div>
-            <button type="submit" class="btn btn-primary btn-block" id="verifyLoginOTPBtn">
-              ✅ Verify & Login
-            </button>
-            <div class="otp-resend">
-              <span id="loginResendTimer">Resend OTP in <strong>60s</strong></span>
-              <button type="button" class="btn-link" id="loginResendBtn" style="display:none;" onclick="resendLoginOTP()">
-                🔄 Resend OTP
-              </button>
-            </div>
-          </form>
-        </div>
 
-        <!-- Step 3: Unverified — needs email OTP (from register) -->
-        <div class="auth-step" id="stepVerifyEmail">
-          <div class="auth-header">
-            <div class="otp-icon">📧</div>
-            <h2>Verify Your Email</h2>
-            <p>Your email is not yet verified. Enter the OTP sent to <strong id="verifyEmailDisplay">your email</strong></p>
-          </div>
-          <form id="verifyEmailForm" class="auth-form">
-            <div class="otp-inputs" id="verifyEmailOtpInputs">
-              <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric" autocomplete="one-time-code">
-              <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric">
-              <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric">
-            </div>
-            <button type="submit" class="btn btn-primary btn-block" id="verifyEmailOTPBtn">
-              ✅ Verify Email
-            </button>
-            <div class="otp-resend">
-              <span id="emailResendTimer">Resend OTP in <strong>60s</strong></span>
-              <button type="button" class="btn-link" id="emailResendBtn" style="display:none;" onclick="resendVerifyEmailOTP()">
-                🔄 Resend OTP
-              </button>
-            </div>
-          </form>
-        </div>
 
         <!-- Success -->
         <div class="auth-step" id="stepLoginSuccess">

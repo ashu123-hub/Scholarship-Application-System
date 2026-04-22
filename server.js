@@ -1,8 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
-const { initDatabase } = require('./src/database');
+const connectDB = require('./src/config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,11 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 
+// IP Project Postman Testing Routes (In-Memory array)
+const ipLogger = require('./src/ip_api/middleware/logger');
+const ipScholarshipRoutes = require('./src/ip_api/routes/scholarshipRoutes');
+app.use('/scholarships', ipLogger, ipScholarshipRoutes);
+
 // SPA fallback — serve HTML pages
 app.get('/apply', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apply.html'));
@@ -71,7 +77,7 @@ app.get('/admin', (req, res) => {
 });
 
 // Initialize DB and start server
-initDatabase().then(() => {
+connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`\n🎓 Scholarship Application System`);
     console.log(`   Server running at http://localhost:${PORT}`);
@@ -79,6 +85,6 @@ initDatabase().then(() => {
     console.log(`   Admin credentials: admin / ashu123\n`);
   });
 }).catch(err => {
-  console.error('Failed to initialize database:', err);
+  console.error('Failed to connect to database:', err);
   process.exit(1);
 });
